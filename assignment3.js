@@ -2,7 +2,7 @@ import {defs, tiny} from './examples/common.js';
 import {Shape_From_File} from "./examples/obj-file-demo.js";
 
 const {
-    Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene,
+    Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene, Texture,
 } = tiny;
 
 export class Assignment3 extends Scene {
@@ -11,14 +11,28 @@ export class Assignment3 extends Scene {
 
         super();
 
+        this.building_positions = [
+            [Math.random() * 100, Math.random() * 100],
+            [Math.random() * 100, Math.random() * 100],
+            [Math.random() * 100, Math.random() * 100],
+            [Math.random() * 100, Math.random() * 100],
+            [Math.random() * 100, Math.random() * 100],
+            [Math.random() * 100, Math.random() * 100],
+            [Math.random() * 100, Math.random() * 100],
+            [Math.random() * 100, Math.random() * 100],
+            [Math.random() * 100, Math.random() * 100],
+            [Math.random() * 100, Math.random() * 100],
+        ]
+
         this.carx = 0;
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
         this.shapes = {
             building: new defs.Cube(),
             floor: new defs.Cube(),
-            car:  new Shape_From_File("assets/car2.obj"),
+            car: new Shape_From_File("assets/car2.obj"),
             obstacle: new defs.Cube(),
             circle: new defs.Regular_2D_Polygon(1, 15),
+            road: new defs.Cube(),
         };
 
         // *** Materials
@@ -27,10 +41,14 @@ export class Assignment3 extends Scene {
                 {ambient: .4, diffusivity: .6, color: hex_color("#ffffff")}),
             car: new Material(new defs.Phong_Shader(),
                 {ambient: .4, diffusivity: .6, color: hex_color("#ffffff")}),
-            building: new Material(new defs.Phong_Shader(),
-                {ambient: .4, diffusivity: .6, color: hex_color("#ffffff")}),
+            building: new Material(new defs.Textured_Phong(),
+                {ambient: 1, diffusivity: .1, specularity: .1, color: color(0,0,0,1),
+                    texture: new Texture("assets/skyscrapper.jpg", "LINEAR_MIPMAP_LINEAR")}),
             obstacle: new Material(new defs.Phong_Shader(),
-                {ambient: .4, diffusivity: .6, color: hex_color("#ffffff")})
+                {ambient: .4, diffusivity: .6, color: hex_color("#ffffff")}),
+            road: new Material(new defs.Textured_Phong(),
+                {ambient: 1, diffusivity: .1, specularity: .1, color: color(0,0,0,1),
+                    texture: new Texture("assets/asphalt.jpg", "LINEAR_MIPMAP_LINEAR")}),
         }
 
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
@@ -80,6 +98,19 @@ export class Assignment3 extends Scene {
         floor_transform = floor_transform.times(Mat4.translation(0,-2,0));
         this.shapes.floor.draw(context, program_state, floor_transform, this.materials.floor);
 
+        //Road
+        this.shapes.road.arrays.texture_coord.forEach(
+            (v, i, l) => {
+                v[0] *= 2
+                v[1] *= 30
+            }
+        )
+
+        let road_transform = Mat4.identity();
+        road_transform = road_transform.times(Mat4.scale(3,.25,100));
+        road_transform = road_transform.times(Mat4.translation(0,-1.95,0));
+        this.shapes.road.draw(context,program_state, road_transform, this.materials.road);
+
         //Car
 
         //Car's Position Control Logic
@@ -117,10 +148,34 @@ export class Assignment3 extends Scene {
         o4 = o4.times(Mat4.translation(5*Math.sin(t/4),.75,-24));
         this.shapes.obstacle.draw(context, program_state, o4, this.materials.obstacle);
 
+        //Buildings
+        this.shapes.building.arrays.texture_coord.forEach(
+            (v, i, l) => {
+                v[0] *= 3
+                v[1] *= 3
+            }
+        )
+
+
+        let building_transform_left = Mat4.identity()
+        building_transform_left = building_transform_left.times(Mat4.translation(-10,8,0))
+        building_transform_left = building_transform_left.times(Mat4.scale(3,10,3));
+        let building_transform_right = Mat4.identity()
+        building_transform_right = building_transform_right.times(Mat4.translation(10,8,0))
+        building_transform_right = building_transform_right.times(Mat4.scale(3,10,3));
+        for (let i = 0; i < 10; i++) {
+            building_transform_left = building_transform_left.times(Mat4.translation(0,0,-3))
+            this.shapes.building.draw(context, program_state, building_transform_left, this.materials.building)
+        }
+        for (let i = 0; i < 10; i++) {
+            building_transform_right = building_transform_right.times(Mat4.translation(0,0,-3))
+            this.shapes.building.draw(context, program_state, building_transform_right, this.materials.building)
+        }
+
         //Camera
-        let desired = Mat4.inverse(car_transform.times(Mat4.rotation(Math.PI,0,1,0)).times(Mat4.translation(0,1,4)));
-        desired = desired.map((x,i) => Vector.from(program_state.camera_inverse[i]).mix(x, 1));
-        program_state.set_camera(desired);
+        //let desired = Mat4.inverse(car_transform.times(Mat4.rotation(Math.PI,0,1,0)).times(Mat4.translation(0,1,4)));
+        //desired = desired.map((x,i) => Vector.from(program_state.camera_inverse[i]).mix(x, 1));
+        //program_state.set_camera(desired);
     }
 }
 
