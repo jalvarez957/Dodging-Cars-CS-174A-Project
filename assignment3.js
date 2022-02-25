@@ -2,7 +2,7 @@ import {defs, tiny} from './examples/common.js';
 import {Shape_From_File} from "./examples/obj-file-demo.js";
 
 const {
-    Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene, Texture,
+    Vector, Vector3, vec, vec2, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene, Texture,
 } = tiny;
 
 export class Assignment3 extends Scene {
@@ -11,25 +11,23 @@ export class Assignment3 extends Scene {
 
         super();
 
-        this.building_positions = [
-            [Math.random() * 100, Math.random() * 100],
-            [Math.random() * 100, Math.random() * 100],
-            [Math.random() * 100, Math.random() * 100],
-            [Math.random() * 100, Math.random() * 100],
-            [Math.random() * 100, Math.random() * 100],
-            [Math.random() * 100, Math.random() * 100],
-            [Math.random() * 100, Math.random() * 100],
-            [Math.random() * 100, Math.random() * 100],
-            [Math.random() * 100, Math.random() * 100],
-            [Math.random() * 100, Math.random() * 100],
-        ]
-
+        this.cary = 0;
         this.carx = 0;
+        this.carx_speed = .15 //Car's horizontal speed
+        this.cary_speed = .1 //Car's Vertical Speed (not yet implemented)
+        this.acceleration = .05 //Car's acceleration. this changes the cary_speed.
+
+        //Camera
+        this.camera_view = 0;
+        //0: Back of Car
+        //1: Driver Side
+
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
         this.shapes = {
             building: new defs.Cube(),
             floor: new defs.Cube(),
-            car: new Shape_From_File("assets/car2.obj"),
+            car: new Shape_From_File("assets/ford.obj"),
+            fox: new Shape_From_File("assets/fox.obj"),
             obstacle: new defs.Cube(),
             circle: new defs.Regular_2D_Polygon(1, 15),
             road: new defs.Cube(),
@@ -39,14 +37,18 @@ export class Assignment3 extends Scene {
         this.materials = {
             floor: new Material(new defs.Phong_Shader(),
                 {ambient: .4, diffusivity: .6, color: hex_color("#ffffff")}),
-            car: new Material(new defs.Phong_Shader(),
-                {ambient: .4, diffusivity: .6, color: hex_color("#ffffff")}),
+            car: new Material(new defs.Textured_Phong(),
+                {ambient: .4, diffusivity: .6, color: hex_color("#ffffff"),
+                    texture: new Texture("assets/fordtext.jpg", "LINEAR_MIPMAP_LINEAR")}),
             building: new Material(new defs.Textured_Phong(),
                 {ambient: 1, diffusivity: .1, specularity: .1, color: color(0,0,0,1),
                     texture: new Texture("assets/skyscrapper.jpg", "LINEAR_MIPMAP_LINEAR")}),
             obstacle: new Material(new defs.Phong_Shader(),
                 {ambient: .4, diffusivity: .6, color: hex_color("#ffffff")}),
-            road: new Material(new defs.Textured_Phong(),
+            fox: new Material(new defs.Textured_Phong(),
+                {ambient: 1, diffusivity: .1, specularity: .1, color: color(0,0,0,1),
+                    texture: new Texture("assets/foxtexture.png", "LINEAR_MIPMAP_LINEAR")}),
+            road: new Material(new defs.Fake_Bump_Map(),
                 {ambient: 1, diffusivity: .1, specularity: .1, color: color(0,0,0,1),
                     texture: new Texture("assets/asphalt.jpg", "LINEAR_MIPMAP_LINEAR")}),
         }
@@ -69,6 +71,24 @@ export class Assignment3 extends Scene {
         }, '#6E6460', () => {
             //release event
             this.move = 0;
+        })
+        this.key_triggered_button("Throttle Up", ["o"], () => {
+            //press event
+            this.cary_speed += this.acceleration;
+        }, '#6E6460', () => {
+            //release event
+
+        })
+        this.key_triggered_button("Throttle Down", ["l"], () => {
+            //press event
+            this.cary_speed -= this.acceleration;
+        }, '#6E6460', () => {
+            //release event
+        })
+        this.key_triggered_button("Change Camera View", ["c"], () => {
+            this.camera_view = (this.camera_view+1)%2;
+        }, '#6E6460', () => {
+            //release event
         })
     }
 
@@ -114,22 +134,20 @@ export class Assignment3 extends Scene {
         //Car
 
         //Car's Position Control Logic
-        let carx_speed = .15 //Car's horizontal speed
-        let cary_speed = 1 //Car's Vertical Speed (not yet implemented)
-
         if (this.move > 0){
-            this.carx += carx_speed
+            this.carx -= this.carx_speed
         }
         if (this.move < 0){
-            this.carx -= carx_speed
+            this.carx += this.carx_speed
         }
 
-        //Car Transformation Matrix
+        this.cary -= this.cary_speed
+
+        //Car Transformations
         let car_transform = Mat4.identity();
-        car_transform = car_transform.times(Mat4.rotation(Math.PI,0,1,0));
-        car_transform = car_transform.times(Mat4.translation(0,.05,0));
-        car_transform = car_transform.times(Mat4.translation(this.carx,0,0));
-        this.shapes.car.draw(context, program_state, car_transform, this.materials.car);
+        car_transform = car_transform.times(Mat4.translation(0,.05,95));
+        car_transform = car_transform.times(Mat4.translation(this.carx, 0, this.cary));
+        this.shapes.car.draw(context, program_state, car_transform, this.materials.car, "LINE_STRIP")
 
         //Obstacles
         let o1 = Mat4.identity();
@@ -148,6 +166,15 @@ export class Assignment3 extends Scene {
         o4 = o4.times(Mat4.translation(5*Math.sin(t/4),.75,-24));
         this.shapes.obstacle.draw(context, program_state, o4, this.materials.obstacle);
 
+
+        //Fox (driver)
+        let fox_transform = car_transform
+        fox_transform = fox_transform.times(Mat4.scale(.25,.25,.25));
+        fox_transform = fox_transform.times(Mat4.translation(-1,0,0))
+        fox_transform = fox_transform.times(Mat4.rotation(Math.PI, 0, 1, 0))
+        fox_transform = fox_transform.times(Mat4.rotation(-Math.PI/2, 1, 0, 0))
+        this.shapes.fox.draw(context, program_state, fox_transform, this.materials.fox)
+
         //Buildings
         this.shapes.building.arrays.texture_coord.forEach(
             (v, i, l) => {
@@ -156,26 +183,34 @@ export class Assignment3 extends Scene {
             }
         )
 
-
         let building_transform_left = Mat4.identity()
-        building_transform_left = building_transform_left.times(Mat4.translation(-10,8,0))
+        building_transform_left = building_transform_left.times(Mat4.translation(-10,8,100))
         building_transform_left = building_transform_left.times(Mat4.scale(3,10,3));
         let building_transform_right = Mat4.identity()
-        building_transform_right = building_transform_right.times(Mat4.translation(10,8,0))
+        building_transform_right = building_transform_right.times(Mat4.translation(10,8,100))
         building_transform_right = building_transform_right.times(Mat4.scale(3,10,3));
-        for (let i = 0; i < 10; i++) {
+        for (let i = 0; i < 20; i++) {
             building_transform_left = building_transform_left.times(Mat4.translation(0,0,-3))
             this.shapes.building.draw(context, program_state, building_transform_left, this.materials.building)
         }
-        for (let i = 0; i < 10; i++) {
+        for (let i = 0; i < 20; i++) {
             building_transform_right = building_transform_right.times(Mat4.translation(0,0,-3))
             this.shapes.building.draw(context, program_state, building_transform_right, this.materials.building)
         }
 
-        //Camera
-        //let desired = Mat4.inverse(car_transform.times(Mat4.rotation(Math.PI,0,1,0)).times(Mat4.translation(0,1,4)));
-        //desired = desired.map((x,i) => Vector.from(program_state.camera_inverse[i]).mix(x, 1));
-        //program_state.set_camera(desired);
+        /////Camera/////
+        let desired;
+        switch (this.camera_view){
+            case 0://Camera To Face Back of Car.
+                desired = Mat4.inverse(car_transform.times(Mat4.translation(0,1,4-this.cary_speed)));
+                desired = desired.map((x,i) => Vector.from(program_state.camera_inverse[i]).mix(x, .5));
+                break
+            case 1: //Camera To Face Drivers Side of Car.
+                desired = Mat4.inverse(car_transform.times(Mat4.translation(-3,.5,0-this.cary_speed)).times(Mat4.rotation(-Math.PI/2,0,1,0)));
+                desired = desired.map((x,i) => Vector.from(program_state.camera_inverse[i]).mix(x, .5));
+                break
+        }
+        program_state.set_camera(desired);
     }
 }
 
