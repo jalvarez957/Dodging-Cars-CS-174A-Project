@@ -11,6 +11,7 @@ export class Assignment3 extends Scene {
 
         super();
 
+        //Car Variables
         this.cary = 0;
         this.carx = 0;
         this.carx_speed = .15 //Car's horizontal speed
@@ -19,8 +20,15 @@ export class Assignment3 extends Scene {
 
         //Camera
         this.camera_view = 0;
-        //0: Back of Car
+        //0: Back of Car Facing Forward
         //1: Driver Side
+        //2: Front of Car Facing Backward
+
+        //Obsticles
+        this.obsticle_transforms = []
+        for (let i = 1; i < 21; i++) {
+            this.obsticle_transforms[i] = Mat4.identity()
+        }
 
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
         this.shapes = {
@@ -86,7 +94,7 @@ export class Assignment3 extends Scene {
             //release event
         })
         this.key_triggered_button("Change Camera View", ["c"], () => {
-            this.camera_view = (this.camera_view+1)%2;
+            this.camera_view = (this.camera_view+1)%3;
         }, '#6E6460', () => {
             //release event
         })
@@ -152,20 +160,11 @@ export class Assignment3 extends Scene {
         //Obstacles
         let o1 = Mat4.identity();
         o1 = o1.times(Mat4.translation(5*Math.sin(t),.75,-6));
-        this.shapes.obstacle.draw(context, program_state, o1, this.materials.obstacle);
-
-        let o2 = Mat4.identity();
-        o2 = o2.times(Mat4.translation(5*Math.sin(t/2),.75,-12));
-        this.shapes.obstacle.draw(context, program_state, o2, this.materials.obstacle);
-
-        let o3 = Mat4.identity();
-        o3 = o3.times(Mat4.translation(5*Math.sin(t/3),.75,-18));
-        this.shapes.obstacle.draw(context, program_state, o3, this.materials.obstacle);
-
-        let o4 = Mat4.identity();
-        o4 = o4.times(Mat4.translation(5*Math.sin(t/4),.75,-24));
-        this.shapes.obstacle.draw(context, program_state, o4, this.materials.obstacle);
-
+        for (let i = 1; i < 21; i++) {
+            this.obsticle_transforms[i] = Mat4.identity()
+            this.obsticle_transforms[i] = this.obsticle_transforms[i].times(Mat4.translation(5*Math.sin(t*i/3),.75,100-(i*10)))
+            this.shapes.obstacle.draw(context, program_state, this.obsticle_transforms[i], this.materials.obstacle);
+        }
 
         //Fox (driver)
         let fox_transform = car_transform
@@ -209,11 +208,10 @@ export class Assignment3 extends Scene {
                 desired = Mat4.inverse(car_transform.times(Mat4.translation(-3,.5,0-this.cary_speed)).times(Mat4.rotation(-Math.PI/2,0,1,0)));
                 desired = desired.map((x,i) => Vector.from(program_state.camera_inverse[i]).mix(x, .5));
                 break
+            case 2:
+                desired = Mat4.inverse(car_transform.times(Mat4.translation(0,1,-4+this.cary_speed)).times(Mat4.rotation(-Math.PI,0,1,0)));
+                desired = desired.map((x,i) => Vector.from(program_state.camera_inverse[i]).mix(x, .5));
         }
         program_state.set_camera(desired);
     }
 }
-
-
-
-
