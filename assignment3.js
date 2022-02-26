@@ -1,5 +1,6 @@
 import {defs, tiny} from './examples/common.js';
 import {Shape_From_File} from "./examples/obj-file-demo.js";
+import {Body} from "./examples/collisions-demo";
 
 const {
     Vector, Vector3, vec, vec2, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene, Texture,
@@ -15,7 +16,7 @@ export class Assignment3 extends Scene {
         this.cary = 0;
         this.carx = 0;
         this.carx_speed = .15 //Car's horizontal speed
-        this.cary_speed = .1 //Car's Vertical Speed (not yet implemented)
+        this.cary_speed = 0.0 //Car's Vertical Speed (not yet implemented)
         this.acceleration = .05 //Car's acceleration. this changes the cary_speed.
 
         //Camera
@@ -41,13 +42,17 @@ export class Assignment3 extends Scene {
             road: new defs.Cube(),
         };
 
+        this.colliders = [
+            {box_collider: Body.intersect_sphere, points: new defs.cube, leeway: .5},
+        ];
+
         // *** Materials
         this.materials = {
             floor: new Material(new defs.Phong_Shader(),
                 {ambient: .4, diffusivity: .6, color: hex_color("#ffffff")}),
             car: new Material(new defs.Textured_Phong(),
-                {ambient: .4, diffusivity: .6, color: hex_color("#ffffff"),
-                    texture: new Texture("assets/fordtext.jpg", "LINEAR_MIPMAP_LINEAR")}),
+                {ambient: .4, diffusivity: .1, specularity: .1, color: color(0,0,0,1),
+                    texture: new Texture("assets/car.png", "LINEAR_MIPMAP_LINEAR")}),
             building: new Material(new defs.Textured_Phong(),
                 {ambient: 1, diffusivity: .1, specularity: .1, color: color(0,0,0,1),
                     texture: new Texture("assets/skyscrapper.jpg", "LINEAR_MIPMAP_LINEAR")}),
@@ -154,7 +159,7 @@ export class Assignment3 extends Scene {
         //Car Transformations
         let car_transform = Mat4.identity();
         car_transform = car_transform.times(Mat4.translation(0,.05,95));
-        car_transform = car_transform.times(Mat4.translation(this.carx, 0, this.cary));
+        car_transform = car_transform.times(Mat4.translation(this.carx, .15, this.cary));
         this.shapes.car.draw(context, program_state, car_transform, this.materials.car, "LINE_STRIP")
 
         //Obstacles
@@ -201,7 +206,7 @@ export class Assignment3 extends Scene {
         let desired;
         switch (this.camera_view){
             case 0://Camera To Face Back of Car.
-                desired = Mat4.inverse(car_transform.times(Mat4.translation(0,1,4-this.cary_speed)));
+                desired = Mat4.inverse(car_transform.times(Mat4.translation(0,1,5-this.cary_speed)));
                 desired = desired.map((x,i) => Vector.from(program_state.camera_inverse[i]).mix(x, .5));
                 break
             case 1: //Camera To Face Drivers Side of Car.
