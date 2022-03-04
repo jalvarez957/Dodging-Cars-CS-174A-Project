@@ -36,6 +36,42 @@ export function Find_Center_Of_Cube(points) {
     return result
 }
 
+export function Get_Dimensions_Of_Collision_Box(points) {
+    let min_x = null
+    let max_x = null
+    let min_y = null
+    let max_y = null
+    let min_z = null
+    let max_z = null
+    for (let i = 0; i < points.length; i++){
+        if (min_x == null) {
+            min_x = points[i][0]
+            max_x = points[i][0]
+            min_y = points[i][1]
+            max_y = points[i][1]
+            min_z = points[i][2]
+            max_z = points[i][2]
+        }
+        else {
+            min_x = Math.min(points[i][0], min_x)
+            max_x = Math.max(points[i][0], max_x)
+            min_y = Math.min(points[i][1], min_y)
+            max_y = Math.max(points[i][1], max_y)
+            min_z = Math.min(points[i][2], min_z)
+            max_z = Math.max(points[i][2], max_z)
+        }
+    }
+    let results = [min_x, max_x, min_y, max_y, min_z, max_z]
+    return results
+}
+
+export function checkCollision(pointsA, pointsB) {
+    return (pointsA[0] <= pointsB[1] && pointsA[1] >= pointsB[0]) &&
+        (pointsA[2] <= pointsB[3] && pointsA[3] >= pointsB[2]) &&
+        (pointsA[4] <= pointsB[5] && pointsA[5] >= pointsB[4])
+}
+
+
 export function Distance(point1, point2) {
     return Math.sqrt(((point1[0]-point2[0])**2) + ((point1[1]-point2[1])**2) + ((point1[2]-point2[2])**2))
 }

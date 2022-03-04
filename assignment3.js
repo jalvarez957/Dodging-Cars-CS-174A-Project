@@ -1,21 +1,50 @@
 import {defs, tiny} from './examples/common.js';
 import {Shape_From_File} from "./examples/obj-file-demo.js";
-import {Distance, Find_Center_Of_Cube, Object_to_World_Space} from "./collision-detection.js"
+import {
+    checkCollision,
+    Distance,
+    Find_Center_Of_Cube,
+    Get_Dimensions_Of_Collision_Box,
+    Object_to_World_Space
+} from "./collision-detection.js"
 
 const {
     Vector, Vector3, vec, vec2, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene, Texture,
 } = tiny;
 
-class Cube_Single_Strip extends Shape {
+class Cube_Outline extends Shape {
     constructor() {
-        super("position", "normal",);
-        // Loop 3 times (for each axis), and inside loop twice (for opposing cube sides):
+        super("position", "color");
         this.arrays.position = Vector3.cast(
-            [-1, -1, -1], [1, -1, -1], [-1, -1, 1], [1, -1, 1], [1, 1, -1], [-1, 1, -1], [1, 1, 1], [-1, 1, 1]);
-        this.arrays.normal = Vector3.cast(
-            [-1, -1, -1], [1, -1, -1], [-1, -1, 1], [1, -1, 1], [1, 1, -1], [-1, 1, -1], [1, 1, 1], [-1, 1, 1]);
-        // Arrange the vertices into a square shape in texture space too:
-        this.indices.push(0,2,1,3,6,7,5,2,0,1,5,4,6,1,3,2,7);
+            [-1, -1, -1], [1, -1, -1],
+            [-1, -1, -1], [-1, -1, 1],
+            [-1, -1, -1], [-1, 1, -1],
+            [-1, 1, -1], [-1, 1, 1],
+            [-1, 1, -1], [1, 1, -1],
+            [1, 1, 1], [1, 1, -1],
+            [1, 1, 1], [-1, 1, 1],
+            [1, 1, 1], [1, -1, 1],
+            [1, -1, 1], [-1, -1, 1],
+            [1, -1, 1], [1, -1, -1],
+            [-1, 1, 1], [-1, -1, 1],
+            [1, 1, -1], [1, -1, -1]
+        );
+
+        this.arrays.color = [
+            vec4(1,1,1,1), vec4(1,1,1,1),
+            vec4(1,1,1,1), vec4(1,1,1,1),
+            vec4(1,1,1,1), vec4(1,1,1,1),
+            vec4(1,1,1,1), vec4(1,1,1,1),
+            vec4(1,1,1,1), vec4(1,1,1,1),
+            vec4(1,1,1,1), vec4(1,1,1,1),
+            vec4(1,1,1,1), vec4(1,1,1,1),
+            vec4(1,1,1,1), vec4(1,1,1,1),
+            vec4(1,1,1,1), vec4(1,1,1,1),
+            vec4(1,1,1,1), vec4(1,1,1,1),
+            vec4(1,1,1,1), vec4(1,1,1,1),
+            vec4(1,1,1,1), vec4(1,1,1,1)
+        ]
+        this.indices = false
     }
 }
 
@@ -68,7 +97,7 @@ export class Assignment3 extends Scene {
             car: new Shape_From_File("assets/ford.obj"),
             fox: new Shape_From_File("assets/fox.obj"),
             obstacle: new defs.Cube(),
-            hitbox: new Cube_Single_Strip(),
+            hitbox: new Cube_Outline(),
             circle: new defs.Regular_2D_Polygon(1, 15),
             road: new defs.Cube(),
             skybox: new defs.Subdivision_Sphere(4),
@@ -100,7 +129,7 @@ export class Assignment3 extends Scene {
                 {ambient: 1, diffusivity: .1, specularity: 0, color: color(0,0,0,1),
                     texture: new Texture("assets/sidewalk.jpg")})
         }
-
+        this.white = new Material(new defs.Basic_Shader());
 
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
     }
@@ -136,6 +165,11 @@ export class Assignment3 extends Scene {
         })
         this.key_triggered_button("Change Camera View", ["c"], () => {
             this.camera_view = (this.camera_view+1)%3;
+        }, '#6E6460', () => {
+            //release event
+        })
+        this.key_triggered_button("Show Collision Boxes", ["k"], () => {
+            this.show_collision_boxes = this.show_collision_boxes ? false : true;
         }, '#6E6460', () => {
             //release event
         })
@@ -215,9 +249,12 @@ export class Assignment3 extends Scene {
         let car_transform = Mat4.identity();
         car_transform = car_transform.times(Mat4.translation(0,.05,95));
         car_transform = car_transform.times(Mat4.translation(this.carx, .15, this.cary));
-        let car_center = Find_Center_Of_Cube(Object_to_World_Space(car_transform, this.shapes.hitbox.arrays.position))
-        //console.log(car_center)
+        let car_hit_box = car_transform
+        car_hit_box = car_hit_box.times(Mat4.scale(1,1,1.5))
+        let carAABB = Get_Dimensions_Of_Collision_Box(Object_to_World_Space(car_hit_box, this.shapes.hitbox.arrays.position))
         this.shapes.car.draw(context, program_state, car_transform, this.materials.car, "LINE_STRIP")
+        if (this.show_collision_boxes)
+            this.shapes.hitbox.draw(context,program_state, car_hit_box, this.white, "LINES")
 
         //Obstacles
         let o1 = Mat4.identity();
@@ -227,9 +264,9 @@ export class Assignment3 extends Scene {
         for (let i = 1; i < 21; i++) {
             this.obsticle_transforms[i] = Mat4.identity()
             this.obsticle_transforms[i] = this.obsticle_transforms[i].times(Mat4.translation(5*Math.sin(t*(i%10)/3),.75,100-(i*10)))
-            let obsticle_center = Find_Center_Of_Cube(Object_to_World_Space(this.obsticle_transforms[i], this.shapes.hitbox.arrays.position))
-            if (Distance(obsticle_center, car_center) <= 2)
-                console.log("Hit Obsticle ", i)
+            let obsticleAABB = Get_Dimensions_Of_Collision_Box(Object_to_World_Space(this.obsticle_transforms[i], this.shapes.hitbox.arrays.position))
+            if (checkCollision(carAABB, obsticleAABB))
+                console.log("Hit Obsticle", i)
             this.shapes.obstacle.draw(context, program_state, this.obsticle_transforms[i], this.materials.obstacle);
         }
 
