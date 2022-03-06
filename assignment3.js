@@ -477,7 +477,7 @@ export class Assignment3 extends Scene {
     // Lamps
     for (let i = 1; i < 21; i++) {
       let lamp_color = color(0, 0, 0, 1);
-      if (i * 10 + this.cary <= 10) {
+      if (i * 10 + this.cary <= 12.5) {
         lamp_color = color(0.75, 0.75, 0, 1);
         this.lamp_on = i;
       }
