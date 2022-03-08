@@ -308,12 +308,12 @@ export class Assignment3 extends Scene {
 
         //Obstacles
         let o1 = Mat4.identity();
-        o1 = o1.times(Mat4.translation(5*Math.sin(t),5*Math.sin(t),-6));
+        o1 = o1.times(Mat4.translation(4*Math.sin(t),4*Math.sin(t),-6));
         let temp = Object_to_World_Space(o1, this.shapes.hitbox.arrays.position)
         let center = Find_Center_Of_Cube(temp);
         for (let i = 1; i < 21; i++) {
             this.obsticle_transforms[i] = Mat4.identity()
-            this.obsticle_transforms[i] = this.obsticle_transforms[i].times(Mat4.translation(5*Math.sin(t*(i%10)/3),.75,100-(i*10)))
+            this.obsticle_transforms[i] = this.obsticle_transforms[i].times(Mat4.translation(4*Math.sin(t*(i%10)/3),.75,100-(i*10)))
             let obsticleAABB = Get_Dimensions_Of_Collision_Box(Object_to_World_Space(this.obsticle_transforms[i], this.shapes.hitbox.arrays.position))
             if (checkCollision(carAABB, obsticleAABB))
                 console.log("Hit Obsticle", i)
