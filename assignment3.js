@@ -169,13 +169,13 @@ export class Assignment3 extends Scene {
       building: new Material(new defs.Textured_Phong(), {
         ambient: 1,
         diffusivity: 0.1,
-        specularity: 0.3,
+        specularity: 1, //0.3,
         color: color(0, 0, 0, 1),
-        texture: new Texture('assets/skyscrapper.jpg', 'LINEAR_MIPMAP_LINEAR'),
+        texture: new Texture('assets/building.jpeg', 'LINEAR_MIPMAP_LINEAR'),
       }),
       obstacle: new Material(new defs.Phong_Shader(), {
         ambient: 0.4,
-        diffusivity: 0.6,
+        diffusivity: 1, //0.6,
         color: hex_color('#ffffff'),
       }),
       fox: new Material(new defs.Textured_Phong(), {
@@ -523,7 +523,9 @@ export class Assignment3 extends Scene {
         context,
         program_state,
         this.building_transforms[i],
-        this.materials.building,
+        this.materials.building.override({
+          color: i % 3 == 0 ? color(0.2, 0.13, 0.2, 1) : color(0, 0, 0, 1),
+        }),
       );
     }
 
