@@ -48,6 +48,35 @@ class Cube_Outline extends Shape {
     }
 }
 
+export class Obsticle_Shapes {
+    // **Test_Data** pre-loads some Shapes and Textures that other Scenes can borrow.
+    constructor() {
+        this.textures = {
+            rgb: new Texture("assets/rgb.jpg"),
+            earth: new Texture("assets/earth.gif"),
+            grid: new Texture("assets/grid.png"),
+            stars: new Texture("assets/stars.png"),
+            text: new Texture("assets/text.png"),
+        }
+        this.shapes = {
+            donut: new defs.Torus(15, 15, [[0, 2], [0, 1]]),
+            cone: new defs.Closed_Cone(4, 10, [[0, 2], [0, 1]]),
+            capped: new defs.Capped_Cylinder(4, 12, [[0, 2], [0, 1]]),
+            ball: new defs.Subdivision_Sphere(3, [[0, 1], [0, 1]]),
+            cube: new defs.Cube(),
+            prism: new (defs.Capped_Cylinder.prototype.make_flat_shaded_version())(10, 10, [[0, 2], [0, 1]]),
+            gem: new (defs.Subdivision_Sphere.prototype.make_flat_shaded_version())(2),
+            donut2: new (defs.Torus.prototype.make_flat_shaded_version())(20, 20, [[0, 2], [0, 1]]),
+        };
+    }
+
+    random_shape(shape_list = this.shapes) {
+        // random_shape():  Extract a random shape from this.shapes.
+        const shape_names = Object.keys(shape_list);
+        return shape_list[shape_names[~~(shape_names.length * Math.random())]]
+    }
+}
+
 export class Assignment3 extends Scene {
     constructor() {
         // constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
@@ -83,11 +112,31 @@ export class Assignment3 extends Scene {
             temp_left = temp_left.times(Mat4.scale(3, 6+temp_scale_left, 3))
             this.building_transforms.push(temp_left)
 
-            let temp_size_right = Math.random()*7
+            let temp_scale_right = Math.random()*7
             let temp_right = Mat4.identity()
-            temp_right = temp_right.times(Mat4.translation(10, temp_scale_left*1.8, 90-(i*5)))
-            temp_right = temp_right.times(Mat4.scale(3, 6+temp_scale_left, 3));
+            temp_right = temp_right.times(Mat4.translation(10, temp_scale_right*1.8, 90-(i*5)))
+            temp_right = temp_right.times(Mat4.scale(3, 6+temp_scale_right, 3));
             this.building_transforms.push(temp_right)
+        }
+
+        //Tree Transforms
+        this.number_of_trees = 20
+        this.tree_transforms = []
+        for (let i = 0; i < this.number_of_trees; i+=2) {
+            let random_rotation_left = Math.random*Math.PI
+            let temp_left = Mat4.identity()
+            //temp_left = temp_left.times(Mat4.rotation(random_rotation_left,0,1,0))
+
+            temp_left = temp_left.times(Mat4.translation(-5.5, 2, 90-(i*10)))
+            //temp_left = temp_left.times(Mat4.rotation(random_rotation_left,0,1,0))
+            this.tree_transforms.push(temp_left)
+
+            let temp_right = Mat4.identity()
+            let random_rotation_right = Math.random*Math.PI
+            //temp_right = temp_right.times(Mat4.rotation(random_rotation_right,0,1,0))
+            temp_right = temp_right.times(Mat4.translation(5.5, 2, 90-(i*10)))
+            //temp_right = temp_right.times(Mat4.rotation(random_rotation_right,0,1,0))
+            this.tree_transforms.push(temp_right)
         }
 
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
@@ -95,6 +144,7 @@ export class Assignment3 extends Scene {
             building: new defs.Cube(),
             floor: new defs.Cube(),
             car: new Shape_From_File("assets/ford.obj"),
+            tree: new Shape_From_File("assets/tree.obj"),
             fox: new Shape_From_File("assets/fox.obj"),
             obstacle: new defs.Cube(),
             hitbox: new Cube_Outline(),
@@ -289,6 +339,14 @@ export class Assignment3 extends Scene {
         for (let i = 0; i < this.number_of_buildings; i++) {
             this.shapes.building.draw(context, program_state, this.building_transforms[i], this.materials.building)
         }
+
+
+
+        //Trees
+        for (let i = 0; i < this.number_of_trees; i++) {
+            this.shapes.tree.draw(context, program_state, this.tree_transforms[i], this.materials.car, "LINE_STRIP")
+        }
+            
 
         //Sky Box (Sphere)
         //this.shapes.skybox.arrays.texture_coord.forEach(
