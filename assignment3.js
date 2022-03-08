@@ -98,6 +98,7 @@ export class Assignment3 extends Scene {
             fox: new Shape_From_File("assets/fox.obj"),
             teapot: new Shape_From_File("assets/teapot.obj"),
             lion: new Shape_From_File("assets/lion-cub.obj"),
+            lamp: new Shape_From_File("assets/lamp.obj"),
             obstacle: new defs.Cube(),
             hitbox: new Cube_Outline(),
             circle: new defs.Regular_2D_Polygon(1, 15),
@@ -141,7 +142,10 @@ export class Assignment3 extends Scene {
                     texture: new Texture("assets/fin.png", "LINEAR_MIPMAP_LINEAR")}),
             lion: new Material(new defs.Textured_Phong(),
                 {ambient: 1, diffusivity: 1, specularity: 0, color: color(0,0,0,1),
-                    texture: new Texture("assets/lion.jpg", "LINEAR_MIPMAP_LINEAR")})
+                    texture: new Texture("assets/lion.jpg", "LINEAR_MIPMAP_LINEAR")}),
+            lamp: new Material(new defs.Textured_Phong(),
+                {ambient: 1, diffusivity: 1, specularity: 0, color: color(0,0,0,1),
+                    texture: new Texture("assets/lamp.jpg", "LINEAR_MIPMAP_LINEAR")})
         }
         this.white = new Material(new defs.Basic_Shader());
 
@@ -309,11 +313,11 @@ export class Assignment3 extends Scene {
             rotMatrix = rotMatrix.times(Mat4.rotation(-Math.PI/4, 1, 0, 0))
             //4
             this.obsticle_transforms[i*4+4] = Mat4.identity()
-            this.obsticle_transforms[i*4+4] = this.obsticle_transforms[i*4+4].times(Mat4.translation(5*Math.sin(t*((i*4+4)%10)/3),.75,100-((i*4+4)*10)))
+            this.obsticle_transforms[i*4+4] = this.obsticle_transforms[i*4+4].times(Mat4.translation(5*Math.sin(t*((i*4+4)%10)/3),.25,100-((i*4+4)*10)))
             obsticleAABB = Get_Dimensions_Of_Collision_Box(Object_to_World_Space(this.obsticle_transforms[i*4+4], this.shapes.hitbox.arrays.position))
             if (checkCollision(carAABB, obsticleAABB))
                 console.log("Hit Obsticle", i)
-            this.shapes.fox.draw(context, program_state, this.obsticle_transforms[i*4+4].times(rotMatrix), this.materials.fox2);
+            this.shapes.lamp.draw(context, program_state, this.obsticle_transforms[i*4+4], this.materials.lamp);
             rotMatrix = rotMatrix.times(Mat4.rotation(-Math.PI/4, 1, 0, 0))
         }
         /*
