@@ -105,6 +105,9 @@ export class Assignment3 extends Scene {
             road: new defs.Cube(),
             skybox: new defs.Subdivision_Sphere(4),
             sidewalk: new defs.Cube(),
+            finishline: new defs.Cube(),
+            wall: new defs.Cube(),
+            sidewalls: new defs.Cube(),
         };
 
         // *** Materials
@@ -138,14 +141,17 @@ export class Assignment3 extends Scene {
                 {ambient: 1, diffusivity: .1, specularity: 0, color: color(0,0,0,1),
                     texture: new Texture("assets/sidewalk.jpg")}),
             finishLine: new Material(new defs.Textured_Phong(),
-                {ambient: 1, diffusivity: 1, specularity: 0, color: color(0,0,0,1),
+                {ambient: 1, diffusivity: 0.1, specularity: 0.2, color: color(0,0,0,1),
                     texture: new Texture("assets/fin.png", "LINEAR_MIPMAP_LINEAR")}),
             lion: new Material(new defs.Textured_Phong(),
                 {ambient: 1, diffusivity: 1, specularity: 0, color: color(0,0,0,1),
                     texture: new Texture("assets/lion.jpg", "LINEAR_MIPMAP_LINEAR")}),
             lamp: new Material(new defs.Textured_Phong(),
                 {ambient: 1, diffusivity: 1, specularity: 0, color: color(0,0,0,1),
-                    texture: new Texture("assets/lamp.jpg", "LINEAR_MIPMAP_LINEAR")})
+                    texture: new Texture("assets/lamp.jpg", "LINEAR_MIPMAP_LINEAR")}),
+            wall: new Material(new defs.Textured_Phong(),
+                {ambient: 1, diffusivity: 0.1, specularity: 0.1, color: color(0,0,0,1),
+                    texture: new Texture("assets/brickwall.jpeg", "LINEAR_MIPMAP_LINEAR")}),
         }
         this.white = new Material(new defs.Basic_Shader());
 
@@ -171,6 +177,7 @@ export class Assignment3 extends Scene {
         this.key_triggered_button("Throttle Up", ["o"], () => {
             //press event
             this.cary_speed += this.acceleration;
+            this.cary_speed = Math.min(.2, this.cary_speed)
         }, '#6E6460', () => {
             //release event
 
@@ -178,6 +185,7 @@ export class Assignment3 extends Scene {
         this.key_triggered_button("Throttle Down", ["l"], () => {
             //press event
             this.cary_speed -= this.acceleration;
+            this.cary_speed = Math.max(0, this.cary_speed)
         }, '#6E6460', () => {
             //release event
         })
@@ -191,6 +199,12 @@ export class Assignment3 extends Scene {
         }, '#6E6460', () => {
             //release event
         })
+    }
+
+    reset_car () {
+        this.carx = 0
+        this.cary = 0
+        this.cary_speed = 0
     }
 
     display(context, program_state) {
@@ -250,20 +264,16 @@ export class Assignment3 extends Scene {
         sidewalk_right_transform = sidewalk_right_transform.times(Mat4.translation(-6,-1.70, 0));
         this.shapes.road.draw(context, program_state, sidewalk_right_transform, this.materials.sidewalk)
 
-        //finish line
-        let finish_line_transformation = Mat4.identity();
-        finish_line_transformation = finish_line_transformation.times(Mat4.scale(20,.25,1));
-        finish_line_transformation = finish_line_transformation.times(Mat4.translation(0, -1.9, -80));
-        this.shapes.road.draw(context, program_state, finish_line_transformation, this.materials.finishLine);
-
         //Car
 
         //Car's Position Control Logic
         if (this.move > 0){
             this.carx -= this.carx_speed
+            this.carx = Math.max(-6, this.carx)
         }
         if (this.move < 0){
             this.carx += this.carx_speed
+            this.carx = Math.min(6, this.carx)
         }
 
         this.cary -= this.cary_speed
@@ -291,33 +301,49 @@ export class Assignment3 extends Scene {
             this.obsticle_transforms[i*4+1] = Mat4.identity()
             this.obsticle_transforms[i*4+1] = this.obsticle_transforms[i*4+1].times(Mat4.translation(5*Math.sin(t*((i*4+1)%10)/3),.75,100-((i*4+1)*10)))
             let obsticleAABB = Get_Dimensions_Of_Collision_Box(Object_to_World_Space(this.obsticle_transforms[i*4+1], this.shapes.hitbox.arrays.position))
-            if (checkCollision(carAABB, obsticleAABB))
+            if (checkCollision(carAABB, obsticleAABB)) {
                 console.log("Hit Obsticle", i)
+                this.reset_car()
+            }
             this.shapes.obstacle.draw(context, program_state, this.obsticle_transforms[i*4+1].times(rotMatrix), this.materials.obstacle);
+            if (this.show_collision_boxes)
+                this.shapes.hitbox.draw(context,program_state, this.obsticle_transforms[i*4+1], this.white, "LINES")
             rotMatrix = rotMatrix.times(Mat4.rotation(-Math.PI/4, 1, 0, 0))
             //2 
             this.obsticle_transforms[i*4+2] = Mat4.identity()
             this.obsticle_transforms[i*4+2] = this.obsticle_transforms[i*4+2].times(Mat4.translation(5*Math.sin(t*((i*4+2)%10)/3),.75,100-((i*4+2)*10)))
             obsticleAABB = Get_Dimensions_Of_Collision_Box(Object_to_World_Space(this.obsticle_transforms[i*4+2], this.shapes.hitbox.arrays.position))
-            if (checkCollision(carAABB, obsticleAABB))
+            if (checkCollision(carAABB, obsticleAABB)) {
                 console.log("Hit Obsticle", i)
+                this.reset_car()
+            }
             this.shapes.lion.draw(context, program_state, this.obsticle_transforms[i*4+2], this.materials.lion);
+            if (this.show_collision_boxes)
+                this.shapes.hitbox.draw(context,program_state, this.obsticle_transforms[i*4+2], this.white, "LINES")
             rotMatrix = rotMatrix.times(Mat4.rotation(-Math.PI/4, 1, 0, 0))
             //3
             this.obsticle_transforms[i*4+3] = Mat4.identity()
             this.obsticle_transforms[i*4+3] = this.obsticle_transforms[i*4+3].times(Mat4.translation(5*Math.sin(t*((i*4+3)%10)/3),.75,100-((i*4+3)*10)))
             obsticleAABB = Get_Dimensions_Of_Collision_Box(Object_to_World_Space(this.obsticle_transforms[i*4+3], this.shapes.hitbox.arrays.position))
-            if (checkCollision(carAABB, obsticleAABB))
+            if (checkCollision(carAABB, obsticleAABB)) {
                 console.log("Hit Obsticle", i)
+                this.reset_car()
+            }
             this.shapes.teapot.draw(context, program_state, this.obsticle_transforms[i*4+3].times(rotMatrix), this.materials.teapot);
+            if (this.show_collision_boxes)
+                this.shapes.hitbox.draw(context,program_state, this.obsticle_transforms[i*4+3], this.white, "LINES")
             rotMatrix = rotMatrix.times(Mat4.rotation(-Math.PI/4, 1, 0, 0))
             //4
             this.obsticle_transforms[i*4+4] = Mat4.identity()
             this.obsticle_transforms[i*4+4] = this.obsticle_transforms[i*4+4].times(Mat4.translation(5*Math.sin(t*((i*4+4)%10)/3),.25,100-((i*4+4)*10)))
             obsticleAABB = Get_Dimensions_Of_Collision_Box(Object_to_World_Space(this.obsticle_transforms[i*4+4], this.shapes.hitbox.arrays.position))
-            if (checkCollision(carAABB, obsticleAABB))
+            if (checkCollision(carAABB, obsticleAABB)) {
                 console.log("Hit Obsticle", i)
+                this.reset_car()
+            }
             this.shapes.lamp.draw(context, program_state, this.obsticle_transforms[i*4+4], this.materials.lamp);
+            if (this.show_collision_boxes)
+                this.shapes.hitbox.draw(context,program_state, this.obsticle_transforms[i*4+4], this.white, "LINES")
             rotMatrix = rotMatrix.times(Mat4.rotation(-Math.PI/4, 1, 0, 0))
         }
         /*
@@ -359,6 +385,60 @@ export class Assignment3 extends Scene {
         for (let i = 0; i < this.number_of_buildings; i++) {
             this.shapes.building.draw(context, program_state, this.building_transforms[i], this.materials.building)
         }
+
+        //Walls
+        this.shapes.wall.arrays.texture_coord.forEach(
+            (v, i, l) => {
+                v[0] *= 5
+                v[1] *= 1
+            }
+        )
+        let wall_transform_end = Mat4.identity()
+        wall_transform_end = wall_transform_end.times(Mat4.translation(0, 0, -100))
+        wall_transform_end = wall_transform_end.times(Mat4.scale(12, 5, 1))
+        this.shapes.wall.draw(context, program_state, wall_transform_end, this.materials.wall)
+
+        let wall_transform_start = Mat4.identity()
+        wall_transform_start = wall_transform_start.times(Mat4.translation(0, 0, 101))
+        wall_transform_start = wall_transform_start.times(Mat4.scale(12, 5, 1))
+        this.shapes.wall.draw(context, program_state, wall_transform_start, this.materials.wall)
+
+        this.shapes.sidewalls.arrays.texture_coord.forEach(
+            (v, i, l) => {
+                v[0] *= 60
+                v[1] *= 1
+            }
+        )
+        let wall_transform_left = Mat4.identity()
+        wall_transform_left = wall_transform_left.times(Mat4.translation(-12, 0, 0))
+        wall_transform_left = wall_transform_left.times(Mat4.rotation(Math.PI/2, 0, 1, 0))
+        wall_transform_left = wall_transform_left.times(Mat4.scale(100, 5, 1))
+        this.shapes.sidewalls.draw(context, program_state, wall_transform_left, this.materials.wall)
+
+        let wall_transform_right = Mat4.identity()
+        wall_transform_right = wall_transform_right.times(Mat4.translation(12, 0, 0))
+        wall_transform_right = wall_transform_right.times(Mat4.rotation(Math.PI/2, 0, 1, 0))
+        wall_transform_right = wall_transform_right.times(Mat4.scale(100, 5, 1))
+        this.shapes.sidewalls.draw(context, program_state, wall_transform_right, this.materials.wall)
+
+        //finish line
+        this.shapes.finishline.arrays.texture_coord.forEach(
+            (v, i, l) => {
+                v[0] *= 10
+                v[1] *= 1
+            }
+        )
+        let finish_line_transformation = Mat4.identity();
+        finish_line_transformation = finish_line_transformation.times(Mat4.scale(10,.25, 1));
+        finish_line_transformation = finish_line_transformation.times(Mat4.translation(0, -1.9, -80));
+        let finish_line_hitbox = finish_line_transformation
+        finish_line_hitbox = finish_line_hitbox.times(Mat4.translation(0,1,0))
+        let finish_lineAABB = Get_Dimensions_Of_Collision_Box(Object_to_World_Space(finish_line_hitbox, this.shapes.hitbox.arrays.position))
+        this.shapes.finishline.draw(context, program_state, finish_line_transformation, this.materials.finishLine);
+        if (checkCollision(finish_lineAABB, carAABB))
+            console.log("Reached The Finish")
+        if (this.show_collision_boxes)
+            this.shapes.hitbox.draw(context,program_state, finish_line_hitbox, this.white, "LINES")
 
         //Sky Box (Sphere)
         //this.shapes.skybox.arrays.texture_coord.forEach(
