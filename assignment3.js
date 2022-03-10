@@ -48,6 +48,7 @@ class Cube_Outline extends Shape {
     }
 }
 
+
 export class Assignment3 extends Scene {
     constructor() {
         // constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
@@ -62,7 +63,7 @@ export class Assignment3 extends Scene {
         this.acceleration = .05 //Car's acceleration. this changes the cary_speed.
 
         //Camera
-        this.camera_view = 0;
+        this.camera_view = 2;
         //0: Back of Car Facing Forward
         //1: Driver Side
         //2: Front of Car Facing Backward
@@ -83,18 +84,39 @@ export class Assignment3 extends Scene {
             temp_left = temp_left.times(Mat4.scale(3, 6+temp_scale_left, 3))
             this.building_transforms.push(temp_left)
 
-            let temp_size_right = Math.random()*7
+            let temp_scale_right = Math.random()*7
             let temp_right = Mat4.identity()
-            temp_right = temp_right.times(Mat4.translation(10, temp_scale_left*1.8, 90-(i*5)))
-            temp_right = temp_right.times(Mat4.scale(3, 6+temp_scale_left, 3));
+            temp_right = temp_right.times(Mat4.translation(10, temp_scale_right*1.8, 90-(i*5)))
+            temp_right = temp_right.times(Mat4.scale(3, 6+temp_scale_right, 3));
             this.building_transforms.push(temp_right)
+        }
+
+        //Tree Transforms
+        this.number_of_trees = 20
+        this.tree_transforms = []
+        for (let i = 0; i < this.number_of_trees; i+=2) {
+            let random_rotation_left = Math.random*Math.PI
+            let temp_left = Mat4.identity()
+            //temp_left = temp_left.times(Mat4.rotation(random_rotation_left,0,1,0))
+
+            temp_left = temp_left.times(Mat4.translation(-5.5, 2, 90-(i*10)))
+            //temp_left = temp_left.times(Mat4.rotation(random_rotation_left,0,1,0))
+            this.tree_transforms.push(temp_left)
+
+            let temp_right = Mat4.identity()
+            let random_rotation_right = Math.random*Math.PI
+            //temp_right = temp_right.times(Mat4.rotation(random_rotation_right,0,1,0))
+            temp_right = temp_right.times(Mat4.translation(5.5, 2, 90-(i*10)))
+            //temp_right = temp_right.times(Mat4.rotation(random_rotation_right,0,1,0))
+            this.tree_transforms.push(temp_right)
         }
 
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
         this.shapes = {
             building: new defs.Cube(),
             floor: new defs.Cube(),
-            car: new Shape_From_File("assets/ford.obj"),
+            car: new Shape_From_File("assets/camero.obj"),
+            tree: new Shape_From_File("assets/tree.obj"),
             fox: new Shape_From_File("assets/fox.obj"),
             obstacle: new defs.Cube(),
             hitbox: new Cube_Outline(),
@@ -109,8 +131,8 @@ export class Assignment3 extends Scene {
             floor: new Material(new defs.Phong_Shader(),
                 {ambient: .4, diffusivity: .6, color: hex_color("#ffffff")}),
             car: new Material(new defs.Textured_Phong(),
-                {ambient: .4, diffusivity: .1, specularity: .1, color: color(0,0,0,1),
-                    texture: new Texture("assets/car.png", "LINEAR_MIPMAP_LINEAR")}),
+                {ambient: 1, diffusivity: 1, specularity: 1, color: color(0,0,0,1),
+                    texture: new Texture("assets/camero.png", "LINEAR_MIPMAP_LINEAR")}),
             building: new Material(new defs.Textured_Phong(),
                 {ambient: 1, diffusivity: .1, specularity: .3, color: color(0,0,0,1),
                     texture: new Texture("assets/skyscrapper.jpg", "LINEAR_MIPMAP_LINEAR")}),
@@ -127,7 +149,10 @@ export class Assignment3 extends Scene {
                     texture: new Texture("assets/skybox.png", "LINEAR_MIPMAP_LINEAR")}),
             sidewalk: new Material(new defs.Textured_Phong(),
                 {ambient: 1, diffusivity: .1, specularity: 0, color: color(0,0,0,1),
-                    texture: new Texture("assets/sidewalk.jpg")})
+                    texture: new Texture("assets/sidewalk.jpg")}),
+            tree: new Material(new defs.Textured_Phong(),
+                {ambient: 1, diffusivity: .1, specularity: 0, color: color(0,0,0,1),
+                    texture: new Texture("assets/tree.jpg")})
         }
         this.white = new Material(new defs.Basic_Shader());
 
@@ -247,8 +272,10 @@ export class Assignment3 extends Scene {
         Math.hypot()
         //Car Transformations
         let car_transform = Mat4.identity();
-        car_transform = car_transform.times(Mat4.translation(0,.05,95));
+        //car_transform = car_transform.times(Mat4.rotation(Math.PI, 0,1,0))
+        car_transform = car_transform.times(Mat4.translation(0,-.05,95));
         car_transform = car_transform.times(Mat4.translation(this.carx, .15, this.cary));
+        car_transform = car_transform.times(Mat4.rotation(Math.PI, 0,1,0))
         let car_hit_box = car_transform
         car_hit_box = car_hit_box.times(Mat4.scale(1,1,1.5))
         let carAABB = Get_Dimensions_Of_Collision_Box(Object_to_World_Space(car_hit_box, this.shapes.hitbox.arrays.position))
@@ -258,24 +285,23 @@ export class Assignment3 extends Scene {
 
         //Obstacles
         let o1 = Mat4.identity();
-        o1 = o1.times(Mat4.translation(5*Math.sin(t),5*Math.sin(t),-6));
+        o1 = o1.times(Mat4.translation(4*Math.sin(t),4*Math.sin(t),-6));
         let temp = Object_to_World_Space(o1, this.shapes.hitbox.arrays.position)
         let center = Find_Center_Of_Cube(temp);
         for (let i = 1; i < 21; i++) {
             this.obsticle_transforms[i] = Mat4.identity()
-            this.obsticle_transforms[i] = this.obsticle_transforms[i].times(Mat4.translation(5*Math.sin(t*(i%10)/3),.75,100-(i*10)))
+            this.obsticle_transforms[i] = this.obsticle_transforms[i].times(Mat4.translation(4*Math.sin(t*(i%10)/3),.75,100-(i*10)))
             let obsticleAABB = Get_Dimensions_Of_Collision_Box(Object_to_World_Space(this.obsticle_transforms[i], this.shapes.hitbox.arrays.position))
             if (checkCollision(carAABB, obsticleAABB))
                 console.log("Hit Obsticle", i)
             this.shapes.obstacle.draw(context, program_state, this.obsticle_transforms[i], this.materials.obstacle);
         }
 
-        //Fox (driver)
-        let fox_transform = car_transform
+        //Fox (ex driver)
+        let fox_transform = Mat4.identity()
         fox_transform = fox_transform.times(Mat4.scale(.25,.25,.25));
-        fox_transform = fox_transform.times(Mat4.translation(-1,0,0))
-        fox_transform = fox_transform.times(Mat4.rotation(Math.PI, 0, 1, 0))
-        fox_transform = fox_transform.times(Mat4.rotation(-Math.PI/2, 1, 0, 0))
+        fox_transform = fox_transform.times(Mat4.translation(-25,0,-380))
+        fox_transform = fox_transform.times(Mat4.rotation(Math.PI/2, 0, 1, 0))
         this.shapes.fox.draw(context, program_state, fox_transform, this.materials.fox)
 
         //Buildings
@@ -289,6 +315,14 @@ export class Assignment3 extends Scene {
         for (let i = 0; i < this.number_of_buildings; i++) {
             this.shapes.building.draw(context, program_state, this.building_transforms[i], this.materials.building)
         }
+
+
+
+        //Trees
+        for (let i = 0; i < this.number_of_trees; i++) {
+            this.shapes.tree.draw(context, program_state, this.tree_transforms[i], this.materials.tree, "LINE_STRIP")
+        }
+            
 
         //Sky Box (Sphere)
         //this.shapes.skybox.arrays.texture_coord.forEach(
