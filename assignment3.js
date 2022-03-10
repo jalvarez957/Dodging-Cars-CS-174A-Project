@@ -113,10 +113,13 @@ export class Assignment3 extends Scene {
             this.obsticle_transforms.push(Mat4.identity())
         }
 
-        //Building Transforms
+        //Building Transforms & Colors
         this.number_of_buildings = 38
         this.building_transforms = []
+        this.building_colors = []
         for (let i = 0; i < this.number_of_buildings; i+=2) {
+            this.building_colors.push(color(Math.random()*.05, Math.random()*.02, Math.random()*.04, 1))
+            this.building_colors.push(color(Math.random()*.05, Math.random()*.02, Math.random()*.04e, 1))
             let temp_scale_left = Math.random()*7
             let temp_left = Mat4.identity()
             temp_left = temp_left.times(Mat4.translation(-10, temp_scale_left*1.8, 90-(i*5)))
@@ -182,7 +185,7 @@ export class Assignment3 extends Scene {
             building: new Material(new defs.Textured_Phong(), {
                     ambient: 1,
                     diffusivity: 0.1,
-                    specularity: 1, //0.3,
+                    specularity: 0, //0.3,
                     color: color(0, 0, 0, 1),
                     texture: new Texture('assets/building.jpeg', 'LINEAR_MIPMAP_LINEAR'),
                   }),
@@ -483,17 +486,21 @@ export class Assignment3 extends Scene {
         this.shapes.fox.draw(context, program_state, fox_transform, this.materials.fox)
         
         //Buildings
-        this.shapes.building.arrays.texture_coord.forEach(
-            (v, i, l) => {
-                v[0] *= 3
-                v[1] *= 3
-            }
-        )
-
+        this.shapes.building.arrays.texture_coord.forEach((v, i, l) => {
+            v[0] *= 3;
+            v[1] *= 3;
+        });
+    
         for (let i = 0; i < this.number_of_buildings; i++) {
-            this.shapes.building.draw(context, program_state, this.building_transforms[i], this.materials.building)
+            this.shapes.building.draw(
+            context,
+            program_state,
+            this.building_transforms[i],
+            this.materials.building.override({
+                color: this.building_colors[i],
+            }),
+            );
         }
-
 
 
         //Trees
