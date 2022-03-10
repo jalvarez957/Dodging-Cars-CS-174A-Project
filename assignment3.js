@@ -390,7 +390,7 @@ export class Assignment3 extends Scene {
         car_transform = car_transform.times(Mat4.translation(this.carx, .15, this.cary));
         car_transform = car_transform.times(Mat4.rotation(Math.PI, 0,1,0))
         let car_hit_box = car_transform
-        car_hit_box = car_hit_box.times(Mat4.scale(1,1,1.5))
+        car_hit_box = car_hit_box.times(Mat4.scale(.7,.6,1.5))
         let carAABB = Get_Dimensions_Of_Collision_Box(Object_to_World_Space(car_hit_box, this.shapes.hitbox.arrays.position))
         this.shapes.car.draw(context, program_state, car_transform, this.materials.car, "LINE_STRIP")
         if (this.show_collision_boxes)
@@ -401,35 +401,37 @@ export class Assignment3 extends Scene {
         let rotMatrix = Mat4.identity().times(Mat4.rotation(-Math.PI/4, 1, 0, 0))
         o1 = o1.times(Mat4.translation(4*Math.sin(t),5*Math.sin(t),-6));
         let temp = Object_to_World_Space(o1, this.shapes.hitbox.arrays.position)
-        let center = Find_Center_Of_Cube(temp);
         for (let i = 0; i < 4; i++) {
             //1
             this.obsticle_transforms[i*4+1] = Mat4.identity()
-            this.obsticle_transforms[i*4+1] = this.obsticle_transforms[i*4+1].times(Mat4.translation(4*Math.sin(t*((i*4+1)%10)/3),.75,100-((i*4+1)*10)))
+            this.obsticle_transforms[i*4+1] = this.obsticle_transforms[i*4+1].times(Mat4.translation(4*Math.sin(t*((i*4+1)%10)/3),1.5,100-((i*4+1)*10))).times(Mat4.rotation(Math.PI/4, 1, 0, 0))
+            this.obsticle_transforms[i*4+1] = this.obsticle_transforms[i*4+1].times(Mat4.rotation(t,0,1,0))
             let obsticleAABB = Get_Dimensions_Of_Collision_Box(Object_to_World_Space(this.obsticle_transforms[i*4+1], this.shapes.hitbox.arrays.position))
             if (checkCollision(carAABB, obsticleAABB)) {
                 console.log("Hit Obsticle", i)
                 this.reset_car()
             }
-            this.shapes.obstacle.draw(context, program_state, this.obsticle_transforms[i*4+1].times(rotMatrix), this.materials.obstacle);
+            this.shapes.obstacle.draw(context, program_state, this.obsticle_transforms[i*4+1], this.materials.obstacle);
             if (this.show_collision_boxes)
                 this.shapes.hitbox.draw(context,program_state, this.obsticle_transforms[i*4+1], this.white, "LINES")
             rotMatrix = rotMatrix.times(Mat4.rotation(-Math.PI/4, 1, 0, 0))
             //2 
             this.obsticle_transforms[i*4+2] = Mat4.identity()
-            this.obsticle_transforms[i*4+2] = this.obsticle_transforms[i*4+2].times(Mat4.translation(4*Math.sin(t*((i*4+2)%10)/3),.75,100-((i*4+2)*10)))
-            obsticleAABB = Get_Dimensions_Of_Collision_Box(Object_to_World_Space(this.obsticle_transforms[i*4+2], this.shapes.hitbox.arrays.position))
+            this.obsticle_transforms[i*4+2] = this.obsticle_transforms[i*4+2].times(Mat4.translation(4*Math.sin(t*((i*4+2)%10)/3),.75,100-((i*4+2)*10))).times(Mat4.rotation(Math.PI, 0, 1, 0))
+            let lion_modified_hitbox = this.obsticle_transforms[i*4+2].times(Mat4.scale(.4,1,1.5))
+            obsticleAABB = Get_Dimensions_Of_Collision_Box(Object_to_World_Space(lion_modified_hitbox, this.shapes.hitbox.arrays.position))
             if (checkCollision(carAABB, obsticleAABB)) {
                 console.log("Hit Obsticle", i)
                 this.reset_car()
             }
             this.shapes.lion.draw(context, program_state, this.obsticle_transforms[i*4+2], this.materials.lion);
             if (this.show_collision_boxes)
-                this.shapes.hitbox.draw(context,program_state, this.obsticle_transforms[i*4+2], this.white, "LINES")
+                this.shapes.hitbox.draw(context,program_state, lion_modified_hitbox, this.white, "LINES")
             rotMatrix = rotMatrix.times(Mat4.rotation(-Math.PI/4, 1, 0, 0))
             //3
             this.obsticle_transforms[i*4+3] = Mat4.identity()
-            this.obsticle_transforms[i*4+3] = this.obsticle_transforms[i*4+3].times(Mat4.translation(4*Math.sin(t*((i*4+3)%10)/3),.75,100-((i*4+3)*10)))
+            this.obsticle_transforms[i*4+3] = this.obsticle_transforms[i*4+3].times(Mat4.translation(4*Math.sin(t*((i*4+3)%10)/3),1.5,100-((i*4+3)*10))).times(Mat4.rotation(Math.PI/4, 1, 0, 0))
+            this.obsticle_transforms[i*4+3] = this.obsticle_transforms[i*4+3].times(Mat4.rotation(t,0,1,0))
             obsticleAABB = Get_Dimensions_Of_Collision_Box(Object_to_World_Space(this.obsticle_transforms[i*4+3], this.shapes.hitbox.arrays.position))
             if (checkCollision(carAABB, obsticleAABB)) {
                 console.log("Hit Obsticle", i)
