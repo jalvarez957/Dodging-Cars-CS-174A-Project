@@ -867,7 +867,7 @@ export class Assignment3 extends Scene {
       if (
         window.confirm(
           'Congratulations! You have reached the finish! Press OK to restart or Cancel to stop',
-        )
+        ) == true
       ) {
         this.reset_car();
       }
