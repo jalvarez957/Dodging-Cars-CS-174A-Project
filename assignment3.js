@@ -869,9 +869,8 @@ export class Assignment3 extends Scene {
           'Congratulations! You have reached the finish! Press OK to restart or Cancel to stop',
         )
       ) {
-        this.carx = 0;
+        this.reset_car();
       }
-      this.carx_speed = 0;
       this.cary_speed = 0;
     }
     if (this.show_collision_boxes)
