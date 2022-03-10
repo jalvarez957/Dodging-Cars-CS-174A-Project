@@ -560,8 +560,16 @@ export class Assignment3 extends Scene {
         finish_line_hitbox = finish_line_hitbox.times(Mat4.translation(0,1,0))
         let finish_lineAABB = Get_Dimensions_Of_Collision_Box(Object_to_World_Space(finish_line_hitbox, this.shapes.hitbox.arrays.position))
         this.shapes.finishline.draw(context, program_state, finish_line_transformation, this.materials.finishline);
-        if (checkCollision(finish_lineAABB, carAABB))
-            console.log("Reached The Finish")
+        if (checkCollision(finish_lineAABB, carAABB)) {
+            if (
+              window.confirm(
+                'Congratulations! You have reached the finish! Press OK to restart or Cancel to stop',
+              ) == true
+            ) {
+              this.reset_car();
+            }
+            this.cary_speed = 0;
+          }
         if (this.show_collision_boxes)
             this.shapes.hitbox.draw(context,program_state, finish_line_hitbox, this.white, "LINES")
         
