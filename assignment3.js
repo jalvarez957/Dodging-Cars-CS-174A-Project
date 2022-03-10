@@ -119,7 +119,7 @@ export class Assignment3 extends Scene {
         this.building_colors = []
         for (let i = 0; i < this.number_of_buildings; i+=2) {
             this.building_colors.push(color(Math.random()*.05, Math.random()*.02, Math.random()*.04, 1))
-            this.building_colors.push(color(Math.random()*.05, Math.random()*.02, Math.random()*.04e, 1))
+            this.building_colors.push(color(Math.random()*.05, Math.random()*.02, Math.random()*.04, 1))
             let temp_scale_left = Math.random()*7
             let temp_left = Mat4.identity()
             temp_left = temp_left.times(Mat4.translation(-10, temp_scale_left*1.8, 90-(i*5)))
