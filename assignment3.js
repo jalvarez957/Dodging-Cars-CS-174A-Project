@@ -136,21 +136,14 @@ export class Assignment3 extends Scene {
         //Tree Transforms
         this.number_of_trees = 20
         this.tree_transforms = []
-        for (let i = 0; i < this.number_of_trees; i+=2) {
+        for (let i = 0; i < this.number_of_trees; i++) {
             let random_rotation_left = Math.random*Math.PI
-            let temp_left = Mat4.identity()
-            //temp_left = temp_left.times(Mat4.rotation(random_rotation_left,0,1,0))
-
-            temp_left = temp_left.times(Mat4.translation(-5.5, 2, 90-(i*10)))
-            //temp_left = temp_left.times(Mat4.rotation(random_rotation_left,0,1,0))
-            this.tree_transforms.push(temp_left)
-
-            let temp_right = Mat4.identity()
-            let random_rotation_right = Math.random*Math.PI
-            //temp_right = temp_right.times(Mat4.rotation(random_rotation_right,0,1,0))
-            temp_right = temp_right.times(Mat4.translation(5.5, 2, 90-(i*10)))
-            //temp_right = temp_right.times(Mat4.rotation(random_rotation_right,0,1,0))
-            this.tree_transforms.push(temp_right)
+            let temp = Mat4.identity()
+            if (i % 2 == 0)  
+                temp = temp.times(Mat4.translation(-5.5, 2, 90-(i*10)))
+            else
+                temp = temp.times(Mat4.translation(5.5, 2, 90-(i*10)))
+            this.tree_transforms.push(temp)
         }
 
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
@@ -408,7 +401,7 @@ export class Assignment3 extends Scene {
             this.obsticle_transforms[i*4+1] = this.obsticle_transforms[i*4+1].times(Mat4.rotation(t,0,1,0))
             let obsticleAABB = Get_Dimensions_Of_Collision_Box(Object_to_World_Space(this.obsticle_transforms[i*4+1], this.shapes.hitbox.arrays.position))
             if (checkCollision(carAABB, obsticleAABB)) {
-                console.log("Hit Obsticle", i)
+                console.log("Hit Obsticle ", i)
                 this.reset_car()
             }
             this.shapes.obstacle.draw(context, program_state, this.obsticle_transforms[i*4+1], this.materials.obstacle);
@@ -421,7 +414,7 @@ export class Assignment3 extends Scene {
             let lion_modified_hitbox = this.obsticle_transforms[i*4+2].times(Mat4.scale(.4,1,1.5))
             obsticleAABB = Get_Dimensions_Of_Collision_Box(Object_to_World_Space(lion_modified_hitbox, this.shapes.hitbox.arrays.position))
             if (checkCollision(carAABB, obsticleAABB)) {
-                console.log("Hit Obsticle", i)
+                console.log("Hit Obsticle ", i)
                 this.reset_car()
             }
             this.shapes.lion.draw(context, program_state, this.obsticle_transforms[i*4+2], this.materials.lion);
@@ -434,7 +427,7 @@ export class Assignment3 extends Scene {
             this.obsticle_transforms[i*4+3] = this.obsticle_transforms[i*4+3].times(Mat4.rotation(t,0,1,0))
             obsticleAABB = Get_Dimensions_Of_Collision_Box(Object_to_World_Space(this.obsticle_transforms[i*4+3], this.shapes.hitbox.arrays.position))
             if (checkCollision(carAABB, obsticleAABB)) {
-                console.log("Hit Obsticle", i)
+                console.log("Hit Obsticle ", i)
                 this.reset_car()
             }
             this.shapes.teapot.draw(context, program_state, this.obsticle_transforms[i*4+3].times(rotMatrix), this.materials.teapot);
@@ -446,7 +439,7 @@ export class Assignment3 extends Scene {
             this.obsticle_transforms[i*4+4] = this.obsticle_transforms[i*4+4].times(Mat4.translation(4*Math.sin(t*((i*4+4)%10)/3),.25,100-((i*4+4)*10)))
             obsticleAABB = Get_Dimensions_Of_Collision_Box(Object_to_World_Space(this.obsticle_transforms[i*4+4], this.shapes.hitbox.arrays.position))
             if (checkCollision(carAABB, obsticleAABB)) {
-                console.log("Hit Obsticle", i)
+                console.log("Hit Obsticle ", i)
                 this.reset_car()
             }
             this.shapes.lamp.draw(context, program_state, this.obsticle_transforms[i*4+4], this.materials.lamp);
@@ -459,25 +452,24 @@ export class Assignment3 extends Scene {
         for (let i = 1; i < 21; i++) {
             let lamp_color = color(0, 0, 0, 1);
             if (i * 10 + this.cary <= 12.5) {
-            lamp_color = color(0.75, 0.75, 0, 1);
-            this.lamp_on = i;
+                lamp_color = color(0.75, 0.75, 0, 1);
+                this.lamp_on = i;
             }
-
+            let streetlight_transform = Mat4.identity()
             if (i % 2 == 0) {
-            this.shapes.streetlight.draw(
-                context,
-                program_state,
-                Mat4.identity().times(Mat4.translation(-5, 2, 100 - i * 10)),
-                this.materials.streetlight.override({ color: lamp_color }),
-            );
+                streetlight_transform = streetlight_transform.times(Mat4.translation(-5, 2, 100 - i * 10))
             } else {
-            this.shapes.streetlight.draw(
-                context,
-                program_state,
-                Mat4.identity().times(Mat4.translation(5, 2, 100 - i * 10)),
-                this.materials.streetlight.override({ color: lamp_color }),
-            );
+                streetlight_transform = streetlight_transform.times(Mat4.translation(5, 2, 100 - i * 10))
             }
+            this.shapes.streetlight.draw(context, program_state, streetlight_transform, this.materials.streetlight.override({color: lamp_color}))
+            let tree_hitbox = streetlight_transform.times(Mat4.scale(.1,1,.1)).times(Mat4.translation(0,-1.2,0))
+            let streetlightAABB = Get_Dimensions_Of_Collision_Box(Object_to_World_Space(tree_hitbox, this.shapes.hitbox.arrays.position))
+            if (checkCollision(carAABB, streetlightAABB)) {
+                console.log("Hit Lamp ", i)
+                this.reset_car()
+            }
+            if (this.show_collision_boxes)
+                this.shapes.hitbox.draw(context,program_state, tree_hitbox, this.white, "LINES")
         }
 
         //Fox (ex driver)
@@ -508,6 +500,15 @@ export class Assignment3 extends Scene {
         //Trees
         for (let i = 0; i < this.number_of_trees; i++) {
             this.shapes.tree.draw(context, program_state, this.tree_transforms[i], this.materials.tree, "LINE_STRIP")
+            let tree_hitbox = this.tree_transforms[i].times(Mat4.scale(.1,1,.1)).times(Mat4.translation(0,-1.2,0))
+            let treeAABB = Get_Dimensions_Of_Collision_Box(Object_to_World_Space(tree_hitbox, this.shapes.hitbox.arrays.position))
+            if (checkCollision(carAABB, treeAABB)) {
+                console.log("Hit Tree ", i)
+                this.reset_car()
+            }
+            this.shapes.tree.draw(context, program_state, this.tree_transforms[i], this.materials.tree);
+            if (this.show_collision_boxes)
+                this.shapes.hitbox.draw(context, program_state, tree_hitbox, this.white, "LINES")
         }
         
         //Walls
