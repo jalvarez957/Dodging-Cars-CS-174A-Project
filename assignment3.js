@@ -134,7 +134,7 @@ export class Assignment3 extends Scene {
         }
 
         //Tree Transforms
-        this.number_of_trees = 20
+        this.number_of_trees = 19
         this.tree_transforms = []
         for (let i = 0; i < this.number_of_trees; i++) {
             let random_rotation_left = Math.random*Math.PI
@@ -171,19 +171,19 @@ export class Assignment3 extends Scene {
         // *** Materials
         this.materials = {
             floor: new Material(new defs.Phong_Shader(),
-                {ambient: .4, diffusivity: .6, color: hex_color("#ffffff")}),
+                {ambient: .4, diffusivity: .1, specularity: 1, color: hex_color("#ffffff")}),
             car: new Material(new defs.Textured_Phong(),
                 {ambient: 1, diffusivity: 1, specularity: 1, color: color(0,0,0,1),
                     texture: new Texture("assets/camero.png", "LINEAR_MIPMAP_LINEAR")}),
             building: new Material(new defs.Textured_Phong(), {
                     ambient: 1,
-                    diffusivity: 0.1,
-                    specularity: 0, //0.3,
+                    diffusivity: 1,
+                    specularity: .2, //0.3,
                     color: color(0, 0, 0, 1),
                     texture: new Texture('assets/building.jpeg', 'LINEAR_MIPMAP_LINEAR'),
                   }),
             obstacle: new Material(new defs.Textured_Phong(),
-                { ambient:0.5, diffusivity: 0.1, color: hex_color("#33F4FF"),
+                { ambient:0.5, diffusivity: 1, specularity: 1, color: hex_color("#33F4FF"),
                 texture: new Texture("assets/danger.jpeg")}),
             teapot: new Material(new defs.Phong_Shader(),
                 {ambient: 0.7, diffusivity: 1, color: hex_color("#DFFF00")}),
@@ -194,13 +194,13 @@ export class Assignment3 extends Scene {
                 {ambient: 0.7, diffusivity: .1, specularity: .1, color: hex_color("#FF00FF"),
                     texture: new Texture("assets/foxtexture.png", "LINEAR_MIPMAP_LINEAR")}),
             road: new Material(new defs.Fake_Bump_Map(),
-                {ambient: 1, diffusivity: .1, specularity: 0, color: color(0,0,0,1),
+                {ambient: 1, diffusivity: 1, specularity: 0, color: color(0,0,0,1),
                     texture: new Texture("assets/asphalt.jpg", "LINEAR_MIPMAP_LINEAR")}),
             skybox: new Material(new defs.Textured_Phong(),
                 {ambient: .4, diffusivity: .1, specularity: 0, color: color(0,0,0,1),
                     texture: new Texture("assets/skybox.png", "LINEAR_MIPMAP_LINEAR")}),
             sidewalk: new Material(new defs.Textured_Phong(),
-                {ambient: 1, diffusivity: .1, specularity: 0, color: color(0,0,0,1),
+                {ambient: 1, diffusivity: 1, specularity: 0, color: color(0,0,0,1),
                     texture: new Texture("assets/sidewalk.jpg")}),
             tree: new Material(new defs.Textured_Phong(),
                 {ambient: 1, diffusivity: .1, specularity: 0, color: color(0,0,0,1),
@@ -215,13 +215,16 @@ export class Assignment3 extends Scene {
                 {ambient: 1, diffusivity: 1, specularity: 0, color: color(0,0,0,1),
                     texture: new Texture("assets/lamp.jpg", "LINEAR_MIPMAP_LINEAR")}),
             wall: new Material(new defs.Textured_Phong(),
-                {ambient: 1, diffusivity: 0.1, specularity: 0.1, color: color(0,0,0,1),
+                {ambient: 1, diffusivity: .1, specularity: 0.1, color: color(0,0,0,1),
                     texture: new Texture("assets/brickwall.jpeg", "LINEAR_MIPMAP_LINEAR")}),
             streetlight: new Material(new defs.Phong_Shader(), {
                     ambient: 1,
                     diffusivity: 0.1,
                     specularity: 0,
               }),
+            grass: new Material(new defs.Textured_Phong(),
+              {ambient: 1, diffusivity: .1, specularity: .2, color: color(0,0,0,1),
+                  texture: new Texture("assets/grass.jpeg", "LINEAR_MIPMAP_LINEAR")}),
         }
         this.white = new Material(new defs.Basic_Shader());
 
@@ -325,10 +328,16 @@ export class Assignment3 extends Scene {
             ];
 
         //Floor
+        this.shapes.floor.arrays.texture_coord.forEach(
+            (v, i, l) => {
+                v[0] *= 4
+                v[1] *= 32
+            }
+        )
         let floor_transform = Mat4.identity();
-        floor_transform = floor_transform.times(Mat4.scale(100,.25,100));
+        floor_transform = floor_transform.times(Mat4.scale(12.5,.25,100));
         floor_transform = floor_transform.times(Mat4.translation(0,-2,0));
-        this.shapes.floor.draw(context, program_state, floor_transform, this.materials.floor);
+        this.shapes.floor.draw(context, program_state, floor_transform, this.materials.grass);
 
         //Road
         this.shapes.road.arrays.texture_coord.forEach(
@@ -588,6 +597,7 @@ export class Assignment3 extends Scene {
         this.shapes.skybox.draw(context, program_state, sky_box_transform, this.materials.skybox)
         
         /////Camera/////
+        
         let desired;
         switch (this.camera_view){
             case 0://Camera To Face Back of Car.
@@ -602,6 +612,8 @@ export class Assignment3 extends Scene {
                 desired = Mat4.inverse(car_transform.times(Mat4.translation(0,1,-4+this.cary_speed)).times(Mat4.rotation(-Math.PI,0,1,0)));
                 desired = desired.map((x,i) => Vector.from(program_state.camera_inverse[i]).mix(x, .5));
         }
+        
         program_state.set_camera(desired)
+        
     }
 }
